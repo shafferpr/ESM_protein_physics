@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "esm-protein-physics"
+version = "0.1.0"
+description = ""
+authors = ["Patrick Shaffer <shafferpr@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.1.4"
+transformers = "^4.36.0"
+torch = "^1.0.2"
+numpy = "^1.26.2"
+datasets = "^2.16.0"
+evaluate = "^0.4.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
