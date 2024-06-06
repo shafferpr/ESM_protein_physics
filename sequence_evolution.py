@@ -46,12 +46,12 @@ import torch
 import random
 
 maskedLMmodel = EsmForMaskedLM.from_pretrained("facebook/esm2_t33_650M_UR50D")
-#model = EsmForSequenceClassification.from_pretrained('models')
+model = EsmForSequenceClassification.from_pretrained('regression_model')
 tokenizer = AutoTokenizer.from_pretrained('facebook/esm2_t33_650M_UR50D')
 
 print("models loaded")
 
-def generate_sequences(sequence, n_sequences=15, n_masks=10):
+def generate_sequences(sequence, n_sequences=10, n_masks=10):
     generated_sequences=[]
     for i in range(n_sequences):
         tokens = tokenizer(sequence, return_tensors='pt')
@@ -80,20 +80,25 @@ def generate_sequences(sequence, n_sequences=15, n_masks=10):
 def predict_absorbances(sequences):
     absorbances=[]
     for seq in sequences:
-        absorbance = model(**tokenizer(seq,return_tensors="pt")).logits[0][0]
-        absorbances.append(absorbance)
+        with torch.no_grad():
+            absorbance = model(**tokenizer(seq,return_tensors="pt")).logits[0][0]
+            absorbances.append(absorbance)
+    return absorbances
 
-max_absorbance_idx = np.argmax(lambdas)
-max_absorbance_seq = seqs[max_absorbance_idx]
 
-def maximize_lambda(seq,n_iterations=10):
+
+def maximize_lambda(max_abs_seqs,n_iterations=20):
     for i in range(n_iterations):
-        seqs = generate_sequences(seq)
+        seqs=[]
+        for max_abs_seq in max_abs_seqs:
+            seqs=seqs+generate_sequences(max_abs_seq)
         absorbances = predict_absorbances(seqs)
-        max_absorbance_idx = np.argmax(absorbances)
-        max_absorbance_seq = seqs[max_absorbance_idx]
-        max_absorbance = absorbances[max_absorbance_idx]
-        seq = max_absorbance_seq
-        print(max_absorbance)
+        max_absorbance_idxs = np.argsort(absorbances)[::-1][:5]
+        max_abs_seqs = [seqs[x] for x in max_absorbance_idxs]
+        print(absorbances[np.argmax(absorbances)])
+        print(max_abs_seqs[0])
 
-maximize_lambda(max_absorbance_seq)
+max_absorbance_idxs = np.argsort(lambdas)[::-1][:5]
+max_absorbance_seqs = [seqs[x] for x in max_absorbance_idxs]
+
+maximize_lambda(max_absorbance_seqs)
